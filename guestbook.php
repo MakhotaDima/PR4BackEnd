@@ -2,14 +2,26 @@
 // TODO 1: PREPARING ENVIRONMENT: 1) session 2) functions
 session_start();
 
+$aConfig = require_once 'config.php';
+
 // TODO 2: ROUTING
 
 // TODO 3: CODE by REQUEST METHODS (ACTIONS) GET, POST, etc. (handle data from request): 1) validate 2) working with data source 3) transforming data
 if (isset($_POST)){
-    $jsonString = json_encode($_POST);
-    $fileStream = fopen ('comments.csv','a');
-    fwrite($fileStream , $jsonString ."\n");
-    fclose($fileStream);
+    $db = mysqli_connect(
+        $aConfig['host'],
+        $aConfig['user'],
+        $aConfig['pass'],
+        $aConfig['name']
+    );
+    $query = "INSERT INTO comments (email, name, comment) VALUES (
+    '". $_POST['email']."',
+    '". $_POST['name']."',
+    '". $_POST['comment']."'
+    )";
+
+    mysqli_query($db, $query);
+    mysqli_close($db);
 }
 // TODO 4: RENDER: 1) view (html) 2) data (from php)
 
@@ -74,19 +86,23 @@ if (isset($_POST)){
                 <div class="col-sm-6">
 
                     <?php
-                    if ( file_exists ('comments.csv')){
-                        $fileStream = fopen('comments.csv', "r");
-                        while(!feof($fileStream)){
-                            $jsonString = fgets ($fileStream);
-                            $array = json_decode ($jsonString, true);
-                            $h1 = "h1";
 
-                            if (empty ($array)) break ;
-                            echo '<h5>' . $array ['name'] . '</h5>';
-                            echo $array ['email'] . '<br>';
-                            echo $array ['comment'] . '<br><hr>';
-                        }
-                        fclose ($fileStream );
+                    $db = mysqli_connect(
+                        $aConfig['host'],
+                        $aConfig['user'],
+                        $aConfig['pass'],
+                        $aConfig['name']
+                    );
+
+                    $query = 'SELECT * FROM comments';
+                    $dbResponse = mysqli_query($db, $query);
+                    $aComments = mysqli_fetch_all($dbResponse, MYSQLI_ASSOC);
+                    mysqli_close($db);
+
+                    foreach($aComments as $comment) {
+                        echo '<h5>' . $comment ['name'] . '</h5>';
+                        echo $comment ['email'] . '<br>';
+                        echo $comment ['comment'] . '<br><hr>';
                     }
                     ?>
                 </div>
